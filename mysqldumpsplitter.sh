@@ -112,7 +112,7 @@ echo "${txtylw}Processing: Extract $OBJECT_NAME from $SOURCE_DUMP with compressi
 }
 
 ## Actual dump splitting
-dump_splitter()
+dumpsplitter()
 {
 	case $EXTRACT in
 		DB) 
@@ -191,6 +191,4 @@ while [ "$1" != "" ]; do
 done
 
 parse_result
-dump_splitter
-exit 0;
-
+dumpsplitter
