@@ -1,4 +1,5 @@
 #!/bin/sh
+<<<<<<< HEAD
 
 # Current Version: 3.0
 # Extracts database, table, all databases, all tables or tables matching on regular expression from the mysqldump.
@@ -20,6 +21,11 @@
 
 # ToDo: Work with straming input
 ## Formating Colour
+=======
+# http://kedar.nitty-witty.com
+# Ver 2 (added dump database & compression)
+#SPLIT DUMP FILE INTO INDIVIDUAL TABLE DUMPS
+>>>>>>> origin/master
 # Text color variables
 txtund=$(tput sgr 0 1)    # Underline
 txtbld=$(tput bold)       # Bold
@@ -32,6 +38,7 @@ txtcyn=$(tput setaf 6)    # Cyan
 txtwht=$(tput setaf 7)    # White
 txtrst=$(tput sgr0)       # Text reset
 
+<<<<<<< HEAD
 ## Variable Declaration
 SOURCE_DUMP='';
 OBJECT_NAME='';
@@ -192,3 +199,55 @@ done
 
 parse_result
 dumpsplitter
+=======
+TARGET_DIR="."
+DUMP_FILE=$1
+TABLE_COUNT=0
+COMPRESSION=gzip
+
+if [ $# = 0 ]; then
+        echo "${txtbld}${txtred}Usage: sh MyDumpSplitter.sh DUMP-FILE-NAME${txtrst} -- Extract all tables as a separate file from dump."
+        echo "${txtbld}${txtred}       sh MyDumpSplitter.sh DUMP-FILE-NAME TABLE-NAME ${txtrst} -- Extract single table from dump."
+        echo "${txtbld}${txtred}       sh MyDumpSplitter.sh DUMP-FILE-NAME -S TABLE-NAME-REGEXP ${txtrst} -- Extract tables from dump for specified regular expression."
+        echo "${txtbld}${txtred}       sh MyDumpSplitter.sh DUMP-FILE-NAME -d DATABASE-NAME ${txtrst} -- Extract complete database from dump."
+
+        exit;
+elif [ $# = 1 ]; then
+        #Loop for each tablename found in provided dumpfile
+        for tablename in $(grep "Table structure for table " $1 | awk -F"\`" {'print $2'})
+        do
+                #Extract table specific dump to tablename.sql
+                sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" $1 | $COMPRESSION > $TARGET_DIR/$tablename.sql.gz
+                TABLE_COUNT=$((TABLE_COUNT+1))
+        done;
+elif [ $# = 2  ]; then
+        for tablename in $(grep -E "Table structure for table \`$2\`" $1| awk -F"\`" {'print $2'})
+        do
+                echo "Extracting $tablename..."
+                #Extract table specific dump to tablename.sql
+                sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" $1 | $COMPRESSION > $TARGET_DIR/$tablename.sql.gz
+                TABLE_COUNT=$((TABLE_COUNT+1))
+        done;
+elif [ $# = 3  ]; then
+
+        if [ $2 = "-S" ]; then
+                for tablename in $(grep -E "Table structure for table \`$3" $1| awk -F"\`" {'print $2'})
+                do
+                        echo "Extracting $tablename..."
+                        #Extract table specific dump to tablename.sql
+                        sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" $1 | $COMPRESSION > $TARGET_DIR/$tablename.sql.gz
+                        TABLE_COUNT=$((TABLE_COUNT+1))
+                done;
+	elif [ $2 = "-d" ]; then
+			echo "Extracting Database: $3...";
+			sed -n "/^-- Current Database: \`$3\`/,/^-- Current Database: /p" $1 | $COMPRESSION > $TARGET_DIR/$3.sql.gz
+			echo "${txtbld} Database $3  extracted from $DUMP_FILE at $TARGET_DIR${txtrst}"
+			exit;
+        else
+                echo "${txtbld}${txtred} Please provide proper parameters. ${txtrst}";
+        fi
+fi
+
+#Summary
+echo "${txtbld}$TABLE_COUNT Table extracted from $DUMP_FILE at $TARGET_DIR${txtrst}"
+>>>>>>> origin/master
