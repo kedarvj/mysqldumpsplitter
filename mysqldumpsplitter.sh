@@ -74,14 +74,14 @@ parse_result()
 
 	## Parse Extract Operation
 	case $EXTRACT in
-		ALLDBS|ALLTABLES ) ;;
+		ALLDBS|ALLTABLES|REGEXP ) ;;
 		DB|TABLE|REGEXP)
 			if [ "$OBJECT_NAME" = '' ]; then
 			    echo "${txtred}ERROR: Expecting input for option --match_string.${txtrst}"
 			    exit 1;
 			fi;
 			;;
-		* ) 	echo "${txtred}ERROR:Wrong option for --extract.${txtrst}"
+		* ) 	echo "${txtred}ERROR: Please specify correct option for --extract.${txtrst}"
 			usage;
 	esac;
 
@@ -174,18 +174,40 @@ dump_splitter()
 	esac
 }
 
+missing_arg()
+{
+	echo "${txtred}ERROR:Missing argument $1.${txtrst}"
+	exit 1;
+}
+
+
 # Accepts Parameters
 while [ "$1" != "" ]; do
     case $1 in
-        --source|-S  )   shift	
+        --source|-S  )   shift
+		if [ -z $1 ]; then 
+			missing_arg --source
+		fi;
 		SOURCE_DUMP=$1 ;;
         --extract|-E  )   shift	
+		if [ -z $1 ]; then 
+			missing_arg --extract
+		fi;
 		EXTRACT=$1 ;;
         --compression|-C  )   shift
+		if [ -z $1 ]; then 
+			missing_arg --source
+		fi;
 		COMPRESSION=$1 ;;
 	--output_dir|-O  ) shift
+		if [ -z $1 ]; then 
+			missing_arg --source
+		fi;
 		OUT_DIR=$1 ;;
 	--match_str|-M ) shift
+		if [ -z $1 ]; then 
+			missing_arg --match_str
+		fi;
 		OBJECT_NAME=$1 ;;
         -h  )   usage
                 exit ;;
@@ -199,4 +221,3 @@ done
 parse_result
 dump_splitter
 exit 0;
-
