@@ -74,7 +74,7 @@ parse_result()
 
 	## Parse Extract Operation
 	case $EXTRACT in
-		ALLDBS|ALLTABLES|REGEXP ) ;;
+		ALLDBS|ALLTABLES ) ;;
 		DB|TABLE|REGEXP)
 			if [ "$OBJECT_NAME" = '' ]; then
 			    echo "${txtred}ERROR: Expecting input for option --match_string.${txtrst}"
