@@ -74,7 +74,13 @@ parse_result()
 
 	## Parse Extract Operation
 	case $EXTRACT in
-		DB|TABLE|ALLDBS|ALLTABLES|REGEXP ) ;;
+		ALLDBS|ALLTABLES|REGEXP ) ;;
+		DB|TABLE|REGEXP)
+			if [ "$OBJECT_NAME" = '' ]; then
+			    echo "${txtred}ERROR: Expecting input for option --match_string.${txtrst}"
+			    exit 1;
+			fi;
+			;;
 		* ) 	echo "${txtred}ERROR:Wrong option for --extract.${txtrst}"
 			usage;
 	esac;
