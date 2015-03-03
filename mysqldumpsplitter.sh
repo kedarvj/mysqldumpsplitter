@@ -46,7 +46,7 @@ DB_NAME='';
 usage()
 {
 	echo "${txtgrn}${txtund}************ Usage ************ "${txtrst};
-	echo "${txtgrn}sh mysqldumpsplitter.sh --source filename --extract [DB|TABLE|ALLDBS|ALLTABLES|REGEXP] --match_str string --compression=[gzip|pigz|none] --output_dir=[path to output dir] ${txtrst}" 
+	echo "${txtgrn}sh mysqldumpsplitter.sh --source filename --extract [DB|TABLE|ALLDBS|ALLTABLES|REGEXP] --match_str string --compression [gzip|pigz|none] --output_dir [path to output dir] ${txtrst}" 
 	echo "${txtund}                                                    ${txtrst}"	
 	echo "OPTIONS:"
 	echo "${txtund}                                                    ${txtrst}"	
