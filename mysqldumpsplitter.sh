@@ -18,6 +18,7 @@
 # ... Extract all databases.
 # Ver. 4.0: March, 2015
 # ... More validations and bug fixes.
+# ... Support for config file.
 # ... Detecting source dump types (compressed/sql).
 # ... Support for compressed backup and bz2 format.
 # Credit: Andrzej Wroblewski (andrzej.wroblewski@packetstorm.pl) for his inputs on compressed backup & bz2 support.
