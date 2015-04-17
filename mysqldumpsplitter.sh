@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Current Version: 4.0
+# Current Version: 5.0
 # Extracts database, table, all databases, all tables or tables matching on regular expression from the mysqldump.
 # Includes output compression options.
 # By: Kedar Vaijanapurkar
@@ -22,7 +22,9 @@
 # ... Detecting source dump types (compressed/sql).
 # ... Support for compressed backup and bz2 format.
 # Credit: Andrzej Wroblewski (andrzej.wroblewski@packetstorm.pl) for his inputs on compressed backup & bz2 support.
-# 
+# Ver. 5.0: Apr, 2015
+# ... Describing the dump, listing all databases and tables
+# ... Extracting one or more tables from single database
 ##
 
 # ToDo: Work with straming input
@@ -49,17 +51,18 @@ TABLE_NAME='';
 DB_NAME='';
 COMPRESSION='gzip';
 DECOMPRESSION='cat';
-VERSION=4.0
+VERSION=5.0
 
 ## Usage Description
 usage()
 {
 	echo "\n\t\t\t\t\t\t\t${txtgrn}${txtund}************ Usage ************ \n"${txtrst};
-	echo "${txtgrn}sh mysqldumpsplitter.sh --source filename --extract [DB|TABLE|ALLDBS|ALLTABLES|REGEXP] --match_str string --compression [gzip|pigz|bzip2|none] --decompression [gzip|pigz|bzip2|none] --output_dir [path to output dir] [--config /path/to/config] ${txtrst}" 
+	echo "${txtgrn}sh mysqldumpsplitter.sh --source filename --extract [DB|TABLE|DBTABLES|ALLDBS|ALLTABLES|REGEXP] --match_str string --compression [gzip|pigz|bzip2|none] --decompression [gzip|pigz|bzip2|none] --output_dir [path to output dir] [--config /path/to/config] ${txtrst}"
 	echo "${txtund}                                                    ${txtrst}"	
 	echo "OPTIONS:"
 	echo "${txtund}                                                    ${txtrst}"	
 	echo "	--source: mysqldump filename to process. It could be a compressed or regular file."
+	echo "	--desc: This option will list out all databases and tables."
 	echo "	--extract: Specify what to extract. Possible values DB, TABLE, ALLDBS, ALLTABLES, REGEXP"
 	echo "	--match_str: Specify match string for extract command option."
 	echo "	--compression: gzip/pigz/bzip2/none (default: gzip). Extracted file will be of this compression."
@@ -98,7 +101,7 @@ parse_result()
 			    echo "${txtylw}Ignoring option --match_string.${txtrst}"
 			fi;
 				;;
-		DB|TABLE|REGEXP)
+		DB|TABLE|REGEXP|DBTABLE)
 			if [ "$MATCH_STR" = '' ]; then
 			    echo "${txtred}ERROR: Expecting input for option --match_string.${txtrst}"
 			    exit 1;
@@ -252,6 +255,26 @@ dump_splitter()
 			echo "${txtbld}Total $TABLE_COUNT tables extracted.${txtrst}"
 			;;
 
+		DBTABLE)
+			MATCH_DB=`echo $MATCH_STR | awk -F "." {'print $1'}`
+			MATCH_TBLS=`echo $MATCH_STR | awk -F "." {'print $2'}`
+			if [ "$MATCH_TBLS" = "*" ]; then
+				MATCH_TBLS='';
+			fi;
+			TABLE_COUNT=0;
+
+			for tablename in $( $DECOMPRESSION $SOURCE | sed -n "/^-- Current Database: \`$MATCH_DB\`/,/^-- Current Database: /p" | grep -E "^-- Table structure for table \`$MATCH_TBLS" | awk -F '\`' {'print $2'} )
+		        do
+		                echo "Extracting $tablename..."
+		                #Extract table specific dump to tablename.sql
+
+		                $DECOMPRESSION $SOURCE | sed -n "/^-- Current Database: \`$MATCH_DB\`/,/^-- Current Database: /p" | sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" | $COMPRESSION > $OUTPUT_DIR/$tablename.$EXT
+				echo "${txtbld}Table $tablename extracted from $DUMP_FILE at $OUTPUT_DIR/$tablename.$EXT${txtrst}"
+		                TABLE_COUNT=$((TABLE_COUNT+1))
+		        done;
+			echo "${txtbld}Total $TABLE_COUNT tables extracted from $MATCH_DB.${txtrst}"
+			;;
+
 		*)	echo "Wrong option, exiting.";
 			usage; 
 			exit 1;;
@@ -277,6 +300,16 @@ while [ "$1" != "" ]; do
 			missing_arg --source
 		fi;
 		SOURCE=$1 ;;
+	--desc	) 
+			EXTRACT="none"
+			echo "-------------------------------";
+			echo "Database\t\tTables";
+			echo "-------------------------------";
+			$DECOMPRESSION $SOURCE | grep -E "(^-- Current Database:|^-- Table structure for table)" | sed  's/-- Current Database: /-------------------------------\n/' | sed 's/-- Table structure for table /\t\t/'| sed 's/`//g' ;
+			echo "-------------------------------";
+			exit 0;
+		;;
+
         --extract|-E  )   shift	
 		if [ -z $1 ]; then 
 			missing_arg --extract
