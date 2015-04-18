@@ -1,4 +1,4 @@
-# mysqldumpsplitter - MySQL Dump splitter to split / extract databases, tables, definitions from mysqldump with plenty of more funtionality.
+# mysqldumpsplitter - MySQL Dump splitter to split / extract databases, tables, list from mysqldump with plenty of more funtionality.
 
 
 ### Usage:
@@ -120,3 +120,10 @@ You can extract single table as follows:
 `mysqldumpsplitter.sh --source filename --extract DBTABLE --match_str "DBNAME.*" --compression none`
 
 Above command will extract all tables from DBNAME database in sql format and store it under "out" directory.
+
+
+12) List content of the mysqldump file
+
+`mysqldumpsplitter.sh --source filename --desc`
+
+Above command will list databases and tables from the dump file.
