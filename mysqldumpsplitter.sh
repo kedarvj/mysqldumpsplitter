@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Current Version: 6.0
+# Current Version: 6.1
 # Extracts database, table, all databases, all tables or tables matching on regular expression from the mysqldump.
 # Includes output compression options.
 # By: Kedar Vaijanapurkar
@@ -25,7 +25,7 @@
 # Ver. 5.0: Apr, 2015
 # ... Describing the dump, listing all databases and tables
 # ... Extracting one or more tables from single database
-# Ver. 6.0: Oct, 2015
+# Ver. 6.1: Oct, 2015
 # ... Bug fixing in REGEXP extraction functionlity
 # ... Bug fixing in describe functionality
 # ... Preserving time_zone & charset env settings in extracted sqls.
@@ -56,7 +56,7 @@ TABLE_NAME='';
 DB_NAME='';
 COMPRESSION='gzip';
 DECOMPRESSION='cat';
-VERSION=6.0
+VERSION=6.1
 
 ## Usage Description
 usage()
@@ -251,7 +251,7 @@ dump_splitter()
                         for dbname in $($DECOMPRESSION $SOURCE | grep -E "^-- Current Database: " | awk -F"\`" {'print $2'})
                         do
                          # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
-                         include_dump_info dbname
+                         include_dump_info $dbname
 
                                 echo "Extracting Database $dbname..."
                                 #Extract database specific dump to database.sql.gz
@@ -267,7 +267,7 @@ dump_splitter()
                         for tablename in $($DECOMPRESSION $SOURCE | grep "Table structure for table " | awk -F"\`" {'print $2'})
                         do
                          # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
-                         include_dump_info tablename
+                         include_dump_info $tablename
 
                          #Extract table specific dump to tablename.sql
                          $DECOMPRESSION $SOURCE | sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" | $COMPRESSION >> $OUTPUT_DIR/$tablename.$EXT
