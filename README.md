@@ -127,3 +127,4 @@ Above command will extract all tables from DBNAME database in sql format and sto
 `mysqldumpsplitter.sh --source filename --desc`
 
 Above command will list databases and tables from the dump file.
+--
