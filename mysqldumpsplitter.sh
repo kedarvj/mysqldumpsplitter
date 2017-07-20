@@ -70,8 +70,8 @@ usage()
         echo "  --desc: This option will list out all databases and tables."
         echo "  --extract: Specify what to extract. Possible values DB, TABLE, ALLDBS, ALLTABLES, REGEXP"
         echo "  --match_str: Specify match string for extract command option."
-        echo "  --compression: gzip/pigz/bzip2/xz|pxz|none (default: gzip). Extracted file will be of this compression."
-        echo "  --decompression: gzip/pigz/bzip2/xz|pxz|none (default: gzip). This will be used against input file."
+        echo "  --compression: gzip/pigz/bzip2/xz/pxz/none (default: gzip). Extracted file will be of this compression."
+        echo "  --decompression: gzip/pigz/bzip2/xz/pxz/none (default: gzip). This will be used against input file."
         echo "  --output_dir: path to output dir. (default: ./out/)"
         echo "  --config: path to config file. You may use --config option to specify the config file that includes following variables."
         echo "\t\tSOURCE=
