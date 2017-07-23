@@ -94,6 +94,8 @@ parse_result()
         ## Validate SOURCE is provided and exists
         if [ -z $SOURCE ]; then
             echo "${txtred}ERROR: Source file not specified or does not exist. (Entered: $SOURCE)${txtrst}"
+            echo "${txtgrn}* Make sure --source is first argument. ${txtrst}";
+            exit 2;
         elif [ ! -f $SOURCE ]; then
             echo "${txtred}ERROR: Source file does not exist. (Entered: $SOURCE)${txtrst}"
             exit 2;
