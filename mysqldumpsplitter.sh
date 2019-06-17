@@ -30,6 +30,9 @@
 # ... Bug fixing in describe functionality
 # ... Preserving time_zone & charset env settings in extracted sqls.
 # Credit: @PeterTheDBA helped understanding the possible issues with environment variable settings included in first 17 lines of mysqldump.
+# Ver. 6.2: Jun, 2019
+# ... Added Disable/Enable keys for faster dump load
+# ... Feature req: https://github.com/kedarvj/mysqldumpsplitter/issues/10
 ##
 
 # ToDo: Work with straming input
@@ -242,10 +245,17 @@ dump_splitter()
                         # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
                         include_dump_info $MATCH_STR
 
+                        # Include Disable Keys for faster datadump load
+                         echo "alter table $MATCH_STR disable keys;" >> $OUTPUT_DIR/$tablename.$EXT
+
                         #Loop for each tablename found in provided dumpfile
                         echo "Extracting $MATCH_STR."
                         #Extract table specific dump to tablename.sql
                         $DECOMPRESSION  $SOURCE | sed -n "/^-- Table structure for table \`$MATCH_STR\`/,/^-- Table structure for table/p" | $COMPRESSION >> $OUTPUT_DIR/$MATCH_STR.$EXT
+
+                        # Include Enable keys
+                        echo "alter table $MATCH_STR enable keys;" >> $OUTPUT_DIR/$tablename.$EXT
+
                         echo "${txtbld} Table $MATCH_STR  extracted from $SOURCE at $OUTPUT_DIR${txtrst}"
                         ;;
 
@@ -271,8 +281,15 @@ dump_splitter()
                          # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
                          include_dump_info $tablename
 
+                         # Include Disable Keys for faster datadump load
+                          echo "alter table $tablename disable keys;" >> $OUTPUT_DIR/$tablename.$EXT
+
                          #Extract table specific dump to tablename.sql
                          $DECOMPRESSION $SOURCE | sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" | $COMPRESSION >> $OUTPUT_DIR/$tablename.$EXT
+
+                         # Include Enable keys
+                         echo "alter table $tablename enable keys;" >> $OUTPUT_DIR/$tablename.$EXT
+
                          TABLE_COUNT=$((TABLE_COUNT+1))
                          echo "${txtbld}Table $tablename extracted from $DUMP_FILE at $OUTPUT_DIR/$tablename.$EXT${txtrst}"
                         done;
@@ -286,9 +303,16 @@ dump_splitter()
                          # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
                          include_dump_info $tablename
 
+                        # Include Disable Keys for faster datadump load
+                         echo "alter table $tablename disable keys;" >> $OUTPUT_DIR/$tablename.$EXT
+
                          echo "Extracting $tablename..."
                                 #Extract table specific dump to tablename.sql
                                 $DECOMPRESSION $SOURCE | sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" | $COMPRESSION >> $OUTPUT_DIR/$tablename.$EXT
+
+                         # Include Enable keys
+                         echo "alter table $tablename enable keys;" >> $OUTPUT_DIR/$tablename.$EXT
+
                          echo "${txtbld}Table $tablename extracted from $DUMP_FILE at $OUTPUT_DIR/$tablename.$EXT${txtrst}"
                                 TABLE_COUNT=$((TABLE_COUNT+1))
                         done;
@@ -310,11 +334,17 @@ dump_splitter()
                                 #Extract table specific dump to tablename.sql
                          # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
                          include_dump_info $tablename
+                         
+                         # Include Disable Keys for faster datadump load
+                          echo "alter table $tablename disable keys;" >> $OUTPUT_DIR/$tablename.$EXT
 
                                 $DECOMPRESSION $SOURCE | sed -n "/^-- Current Database: \`$MATCH_DB\`/,/^-- Current Database: /p" | sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" | $COMPRESSION >> $OUTPUT_DIR/$tablename.$EXT
                          echo "${txtbld}Table $tablename extracted from $DUMP_FILE at $OUTPUT_DIR/$tablename.$EXT${txtrst}"
                                 TABLE_COUNT=$((TABLE_COUNT+1))
                         done;
+                        # Include Enable keys
+                        echo "alter table $tablename enable keys;" >> $OUTPUT_DIR/$tablename.$EXT
+
                         echo "${txtbld}Total $TABLE_COUNT tables extracted from $MATCH_DB.${txtrst}"
                         ;;
 
