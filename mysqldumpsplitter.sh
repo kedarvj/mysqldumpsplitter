@@ -62,7 +62,7 @@ VERSION=6.1
 usage()
 {
         echo "\n\t\t\t\t\t\t\t${txtgrn}${txtund}************ Usage ************ \n"${txtrst};
-        echo "${txtgrn}sh mysqldumpsplitter.sh --source filename --extract [DB|TABLE|DBTABLES|ALLDBS|ALLTABLES|REGEXP] --match_str string --compression [gzip|pigz|bzip2|none] --decompression [gzip|pigz|bzip2|none] --output_dir [path to output dir] [--config /path/to/config] ${txtrst}"
+        echo "${txtgrn}sh mysqldumpsplitter.sh --source filename --extract [DB|TABLE|DBTABLES|ALLDBS|ALLTABLES|REGEXP] --match_str string --compression [gzip|pigz|bzip2|xz|pxz|none] --decompression [gzip|pigz|bzip2|xz|pxz|none] --output_dir [path to output dir] [--config /path/to/config] ${txtrst}"
         echo "${txtund}                                                    ${txtrst}"
         echo "OPTIONS:"
         echo "${txtund}                                                    ${txtrst}"
@@ -70,8 +70,8 @@ usage()
         echo "  --desc: This option will list out all databases and tables."
         echo "  --extract: Specify what to extract. Possible values DB, TABLE, ALLDBS, ALLTABLES, REGEXP"
         echo "  --match_str: Specify match string for extract command option."
-        echo "  --compression: gzip/pigz/bzip2/none (default: gzip). Extracted file will be of this compression."
-        echo "  --decompression: gzip/pigz/bzip2/none (default: gzip). This will be used against input file."
+        echo "  --compression: gzip/pigz/bzip2/xz/pxz/none (default: gzip). Extracted file will be of this compression."
+        echo "  --decompression: gzip/pigz/bzip2/xz/pxz/none (default: gzip). This will be used against input file."
         echo "  --output_dir: path to output dir. (default: ./out/)"
         echo "  --config: path to config file. You may use --config option to specify the config file that includes following variables."
         echo "\t\tSOURCE=
@@ -139,6 +139,22 @@ parse_result()
                 fi;
                 echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
                 EXT="sql.bz2";
+        elif [ "$COMPRESSION" = 'xz' ]; then
+                which $COMPRESSION &>/dev/null
+                if [ $? -ne 0 ]; then
+                        echo "${txtred}WARNING:$COMPRESSION appears having issues, using default gzip.${txtrst}";
+                        COMPRESSION="gzip";
+                fi;
+                echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
+                EXT="sql.xz";
+        elif [ "$COMPRESSION" = 'pxz' ]; then
+                which $COMPRESSION &>/dev/null
+                if [ $? -ne 0 ]; then
+                        echo "${txtred}WARNING:$COMPRESSION appears having issues, using default gzip.${txtrst}";
+                        COMPRESSION="gzip";
+                fi;
+                echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
+                EXT="sql.xz";
         else
                 COMPRESSION='gzip';
                 echo "${txtgrn}Setting compression $COMPRESSION (default).${txtrst}";
@@ -168,6 +184,24 @@ parse_result()
                         DECOMPRESSION="bzip2 -d -c";
                 fi;
                 echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
+       elif [ "$DECOMPRESSION" = 'xz' ]; then
+                which $DECOMPRESSION &>/dev/null
+                if [ $? -ne 0 ]; then
+                        echo "${txtred}WARNING:$DECOMPRESSION appears having issues, using default gzip.${txtrst}";
+                        DECOMPRESSION="gzip -d -c";
+                else
+                        DECOMPRESSION="xz -d -c";
+                fi;
+                echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
+       elif [ "$DECOMPRESSION" = 'pxz' ]; then
+                which $DECOMPRESSION &>/dev/null
+                if [ $? -ne 0 ]; then
+                        echo "${txtred}WARNING:$DECOMPRESSION appears having issues, using default gzip.${txtrst}";
+                        DECOMPRESSION="gzip -d -c";
+                else
+                        DECOMPRESSION="pxz -d -c";
+                fi;
+                echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
         else
                 DECOMPRESSION="gzip -d -c";
                 echo "${txtgrn}Setting decompression $DECOMPRESSION (default).${txtrst}";
@@ -181,7 +215,7 @@ parse_result()
         then
                 echo "${txtylw}File $SOURCE is a compressed dump.${txtrst}"
                 if [ "$DECOMPRESSION" = 'cat' ]; then
-                        echo "${txtred} The input file $SOURCE appears to be a compressed dump. \n While the decompression is set to none.\n Please specify ${txtund}--decompression [gzip|bzip2|pigz]${txtrst}${txtred} argument.${txtrst}";
+                        echo "${txtred} The input file $SOURCE appears to be a compressed dump. \n While the decompression is set to none.\n Please specify ${txtund}--decompression [gzip|bzip2|pigz|xz|pxz]${txtrst}${txtred} argument.${txtrst}";
                         exit 1;
                 fi;
         else
