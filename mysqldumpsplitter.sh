@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Current Version: 6.1
+# Current Version: 6.2
 # Extracts database, table, all databases, all tables or tables matching on regular expression from the mysqldump.
 # Includes output compression options.
 # By: Kedar Vaijanapurkar
@@ -9,6 +9,7 @@
 # Follow GIT: https://github.com/kedarvj/mysqldumpsplitter/
 
 ## Version Info:
+
 # Ver. 1.0: Feb 11, 2010
 # ... Initial version extract table(s) based on name, regexp or all of them from database-dump.
 # Ver. 2.0: Feb, 2015
@@ -29,6 +30,8 @@
 # ... Bug fixing in REGEXP extraction functionlity
 # ... Bug fixing in describe functionality
 # ... Preserving time_zone & charset env settings in extracted sqls.
+# Ver. 6.2: Dic 2020
+# ... Replace cat by pv with that we can see a progressbar
 # Credit: @PeterTheDBA helped understanding the possible issues with environment variable settings included in first 17 lines of mysqldump.
 ##
 
@@ -55,7 +58,7 @@ EXT="sql.gz";
 TABLE_NAME='';
 DB_NAME='';
 COMPRESSION='gzip';
-DECOMPRESSION='cat';
+DECOMPRESSION='pv';
 VERSION=6.1
 
 ## Usage Description
@@ -120,7 +123,7 @@ parse_result()
 
         ## Parse compression
         if [ "$COMPRESSION" = 'none' ]; then
-                COMPRESSION='cat';
+                COMPRESSION='pv';
                 EXT="sql"
                 echo "${txtgrn}Setting no compression.${txtrst}";
         elif [ "$COMPRESSION" = 'pigz' ]; then
@@ -164,7 +167,7 @@ parse_result()
 
         ## Parse  decompression
         if [ "$DECOMPRESSION" = 'none' ]; then
-                DECOMPRESSION='cat';
+                DECOMPRESSION='pv';
                 echo "${txtgrn}Setting no decompression.${txtrst}";
         elif [ "$DECOMPRESSION" = 'pigz' ]; then
                 which $DECOMPRESSION &>/dev/null
@@ -214,15 +217,15 @@ parse_result()
         if [ `echo $?` -eq 0 ]
         then
                 echo "${txtylw}File $SOURCE is a compressed dump.${txtrst}"
-                if [ "$DECOMPRESSION" = 'cat' ]; then
+                if [ "$DECOMPRESSION" = 'pv' ]; then
                         echo "${txtred} The input file $SOURCE appears to be a compressed dump. \n While the decompression is set to none.\n Please specify ${txtund}--decompression [gzip|bzip2|pigz|xz|pxz]${txtrst}${txtred} argument.${txtrst}";
                         exit 1;
                 fi;
         else
                 echo "${txtylw}File $SOURCE is a regular dump.${txtrst}"
-                if [ "$DECOMPRESSION" != 'cat' ]; then
+                if [ "$DECOMPRESSION" != 'pv' ]; then
                         echo "${txtred} Default decompression method for source is gzip. \n The input file $SOURCE does not appear a compressed dump. \n ${txtylw}We will try using no decompression. Please consider specifying ${txtund}--decompression none${txtrst}${txtylw} argument.${txtrst}";
-                        DECOMPRESSION='cat'; ## Auto correct decompression to none for regular files.
+                        DECOMPRESSION='pv'; ## Auto correct decompression to none for regular files.
                 fi;
         fi;
 
