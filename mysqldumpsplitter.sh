@@ -255,7 +255,7 @@ include_dump_info()
         echo "Including environment settings from mysqldump."
         $DECOMPRESSION $SOURCE | head -17 | $COMPRESSION > $OUTPUT_DIR/$OUTPUT_FILE.$EXT
         echo "" | $COMPRESSION >> $OUTPUT_DIR/$MATCH_STR.$EXT
-        echo "/* -- Splitted with mysqldumpsplitter (http://goo.gl/WIWj6d) -- */" | $COMPRESSION >> $OUTPUT_DIR/$OUTPUT_FILE.$EXT
+        echo "/* -- Split with mysqldumpsplitter (http://goo.gl/WIWj6d) -- */" | $COMPRESSION >> $OUTPUT_DIR/$OUTPUT_FILE.$EXT
         echo "" | $COMPRESSION >> $OUTPUT_DIR/$MATCH_STR.$EXT
 }
 
