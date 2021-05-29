@@ -1,6 +1,7 @@
+
 #!/bin/sh
 
-# Current Version: 6.1
+# Current Version: 6.2
 # Extracts database, table, all databases, all tables or tables matching on regular expression from the mysqldump.
 # Includes output compression options.
 # By: Kedar Vaijanapurkar
@@ -26,10 +27,13 @@
 # ... Describing the dump, listing all databases and tables
 # ... Extracting one or more tables from single database
 # Ver. 6.1: Oct, 2015
-# ... Bug fixing in REGEXP extraction functionlity
+# ... Bug fixing in REGEXP extraction functionality
 # ... Bug fixing in describe functionality
 # ... Preserving time_zone & charset env settings in extracted sqls.
 # Credit: @PeterTheDBA helped understanding the possible issues with environment variable settings included in first 17 lines of mysqldump.
+# Ver. 6.2: May, 2021
+# ... Using pv instead of cat whenever available
+# Credit: @zodmanzodman for PR#14
 ##
 
 # ToDo: Work with straming input
@@ -55,8 +59,19 @@ EXT="sql.gz";
 TABLE_NAME='';
 DB_NAME='';
 COMPRESSION='gzip';
-DECOMPRESSION='cat';
-VERSION=6.1
+VERSION=6.2
+
+cat_or_pv()
+{
+  type pv 1>/dev/null 2>&1
+  if [ $? -ne 0 ];
+  then
+    echo 'cat'
+  else
+    echo 'pv'
+  fi;
+}
+DECOMPRESSION=$(cat_or_pv);
 
 ## Usage Description
 usage()
@@ -74,12 +89,13 @@ usage()
         echo "  --decompression: gzip/pigz/bzip2/xz/pxz/none (default: gzip). This will be used against input file."
         echo "  --output_dir: path to output dir. (default: ./out/)"
         echo "  --config: path to config file. You may use --config option to specify the config file that includes following variables."
-        echo "\t\tSOURCE=
+        echo " -e \t\tSOURCE=
 \t\tEXTRACT=
 \t\tCOMPRESSION=
 \t\tDECOMPRESSION=
 \t\tOUTPUT_DIR=
 \t\tMATCH_STR=
+        echo " Note: Script will automatically use pv whenever available to display the progress."
 "
         echo "${txtund}                                                    ${txtrst}"
         echo "Ver. $VERSION"
@@ -120,7 +136,7 @@ parse_result()
 
         ## Parse compression
         if [ "$COMPRESSION" = 'none' ]; then
-                COMPRESSION='cat';
+                COMPRESSION=$(cat_or_pv);
                 EXT="sql"
                 echo "${txtgrn}Setting no compression.${txtrst}";
         elif [ "$COMPRESSION" = 'pigz' ]; then
@@ -164,7 +180,7 @@ parse_result()
 
         ## Parse  decompression
         if [ "$DECOMPRESSION" = 'none' ]; then
-                DECOMPRESSION='cat';
+                DECOMPRESSION=$(cat_or_pv);
                 echo "${txtgrn}Setting no decompression.${txtrst}";
         elif [ "$DECOMPRESSION" = 'pigz' ]; then
                 which $DECOMPRESSION &>/dev/null
@@ -214,15 +230,15 @@ parse_result()
         if [ `echo $?` -eq 0 ]
         then
                 echo "${txtylw}File $SOURCE is a compressed dump.${txtrst}"
-                if [ "$DECOMPRESSION" = 'cat' ]; then
+                if [ "$DECOMPRESSION" = 'cat' ] || ["$DECOMPRESSION" = 'pv' ] ; then
                         echo "${txtred} The input file $SOURCE appears to be a compressed dump. \n While the decompression is set to none.\n Please specify ${txtund}--decompression [gzip|bzip2|pigz|xz|pxz]${txtrst}${txtred} argument.${txtrst}";
                         exit 1;
                 fi;
         else
                 echo "${txtylw}File $SOURCE is a regular dump.${txtrst}"
-                if [ "$DECOMPRESSION" != 'cat' ]; then
+                if [ "$DECOMPRESSION" != 'cat' ] || ["$DECOMPRESSION" = 'pv' ] ; then
                         echo "${txtred} Default decompression method for source is gzip. \n The input file $SOURCE does not appear a compressed dump. \n ${txtylw}We will try using no decompression. Please consider specifying ${txtund}--decompression none${txtrst}${txtylw} argument.${txtrst}";
-                        DECOMPRESSION='cat'; ## Auto correct decompression to none for regular files.
+                        DECOMPRESSION=$(cat_or_pv); ## Auto correct decompression to none for regular files.
                 fi;
         fi;
 
@@ -431,7 +447,3 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
-
-parse_result
-dump_splitter
-exit 0;
