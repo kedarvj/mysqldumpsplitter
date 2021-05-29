@@ -33,7 +33,7 @@
 # Credit: @PeterTheDBA helped understanding the possible issues with environment variable settings included in first 17 lines of mysqldump.
 # Ver. 6.2: May, 2021
 # ... Using pv instead of cat whenever available
-# Credit: @zodmanzodman for PR#14
+# Credit: @zodman (Andres Vargas) for PR#14
 ##
 
 # ToDo: Work with straming input
