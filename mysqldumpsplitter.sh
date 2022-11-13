@@ -284,7 +284,7 @@ dump_splitter()
                         ;;
 
                 ALLDBS)
-                        for dbname in $($DECOMPRESSION $SOURCE | grep -E "^-- Current Database: " | awk -F"\`" {'print $2'})
+                        for dbname in $($DECOMPRESSION $SOURCE | grep -aE "^-- Current Database: " | awk -F"\`" {'print $2'})
                         do
                          # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
                          include_dump_info $dbname
@@ -300,7 +300,7 @@ dump_splitter()
 
                 ALLTABLES)
 
-                        for tablename in $($DECOMPRESSION $SOURCE | grep "Table structure for table " | awk -F"\`" {'print $2'})
+                        for tablename in $($DECOMPRESSION $SOURCE | grep -a "Table structure for table " | awk -F"\`" {'print $2'})
                         do
                          # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
                          include_dump_info $tablename
@@ -315,7 +315,7 @@ dump_splitter()
                 REGEXP)
 
                         TABLE_COUNT=0;
-                        for tablename in $($DECOMPRESSION $SOURCE | grep -E "Table structure for table \`$MATCH_STR" | awk -F"\`" {'print $2'})
+                        for tablename in $($DECOMPRESSION $SOURCE | grep -aE "Table structure for table \`$MATCH_STR" | awk -F"\`" {'print $2'})
                         do
                          # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
                          include_dump_info $tablename
@@ -338,7 +338,7 @@ dump_splitter()
                         fi;
                         TABLE_COUNT=0;
 
-                        for tablename in $( $DECOMPRESSION $SOURCE | sed -n "/^-- Current Database: \`$MATCH_DB\`/,/^-- Current Database: /p" | grep -E "^-- Table structure for table \`$MATCH_TBLS" | awk -F '\`' {'print $2'} )
+                        for tablename in $( $DECOMPRESSION $SOURCE | sed -n "/^-- Current Database: \`$MATCH_DB\`/,/^-- Current Database: /p" | grep -aE "^-- Table structure for table \`$MATCH_TBLS" | awk -F '\`' {'print $2'} )
                         do
                                 echo "Extracting $tablename..."
                                 #Extract table specific dump to tablename.sql
@@ -409,7 +409,7 @@ while [ "$1" != "" ]; do
                         echo "-------------------------------";
                         echo "Database\t\tTables";
                         echo "-------------------------------";
-                        $DECOMPRESSION $SOURCE | grep -E "(^-- Current Database:|^-- Table structure for table)" | sed  's/-- Current Database: /-------------------------------\n/' | sed 's/-- Table structure for table /\t\t/'| sed 's/`//g' ;
+                        $DECOMPRESSION $SOURCE | grep -aE "(^-- Current Database:|^-- Table structure for table)" | sed  's/-- Current Database: /-------------------------------\n/' | sed 's/-- Table structure for table /\t\t/'| sed 's/`//g' ;
                         echo "-------------------------------";
                         exit 0;
                 ;;
