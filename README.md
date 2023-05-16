@@ -1,5 +1,10 @@
 # mysqldumpsplitter - MySQL Dump splitter to split / extract databases, tables, list from mysqldump with plenty of more funtionality.
 
+# Version 8
+This is complete rewrite of earlier mysqldumpsplitter, mainly to improve the performance. 
+The tool is still being built and it may not have all the options ready at the moment though the plan is to implement every exisiting feature during the rewrite and recommendations.
+
+
 
 ### Usage:
 
