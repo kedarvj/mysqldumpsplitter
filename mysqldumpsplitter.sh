@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Current Version: 6.1
+# Current Version: 6.2
 # Extracts database, table, all databases, all tables or tables matching on regular expression from the mysqldump.
 # Includes output compression options.
 # By: Kedar Vaijanapurkar
@@ -30,6 +30,8 @@
 # ... Bug fixing in describe functionality
 # ... Preserving time_zone & charset env settings in extracted sqls.
 # Credit: @PeterTheDBA helped understanding the possible issues with environment variable settings included in first 17 lines of mysqldump.
+# Ver. 6.2: June, 2023
+# ... Added silent mode
 ##
 
 # ToDo: Work with straming input
@@ -47,6 +49,7 @@ txtwht=$(tput setaf 7)    # White
 txtrst=$(tput sgr0)       # Text reset
 
 ## Variable Declaration
+SILENT='0';
 SOURCE='';
 MATCH_STR='';
 EXTRACT='';
@@ -105,7 +108,9 @@ parse_result()
         case $EXTRACT in
                 ALLDBS|ALLTABLES|DESCRIBE )
                         if [ "$MATCH_STR" != '' ]; then
-                            echo "${txtylw}Ignoring option --match_string.${txtrst}"
+                            if [ $SILENT = '0' ]; then
+                                echo "${txtylw}Ignoring option --match_string.${txtrst}"
+                            fi;
                         fi;
                          ;;
                 DB|TABLE|REGEXP|DBTABLE)
@@ -129,7 +134,9 @@ parse_result()
                         echo "${txtred}WARNING:$COMPRESSION appears having issues, using default gzip.${txtrst}";
                         COMPRESSION="gzip";
                 fi;
-                echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
+                fi;
                 EXT="sql.gz"
         elif [ "$COMPRESSION" = 'bzip2' ]; then
                 which $COMPRESSION &>/dev/null
@@ -137,7 +144,9 @@ parse_result()
                         echo "${txtred}WARNING:$COMPRESSION appears having issues, using default gzip.${txtrst}";
                         COMPRESSION="gzip";
                 fi;
-                echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
+                fi;
                 EXT="sql.bz2";
         elif [ "$COMPRESSION" = 'xz' ]; then
                 which $COMPRESSION &>/dev/null
@@ -145,19 +154,25 @@ parse_result()
                         echo "${txtred}WARNING:$COMPRESSION appears having issues, using default gzip.${txtrst}";
                         COMPRESSION="gzip";
                 fi;
-                echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
+                fi;
                 EXT="sql.xz";
         elif [ "$COMPRESSION" = 'pxz' ]; then
                 which $COMPRESSION &>/dev/null
                 if [ $? -ne 0 ]; then
-                        echo "${txtred}WARNING:$COMPRESSION appears having issues, using default gzip.${txtrst}";
-                        COMPRESSION="gzip";
+                    echo "${txtred}WARNING:$COMPRESSION appears having issues, using default gzip.${txtrst}";
+                    COMPRESSION="gzip";
                 fi;
-                echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting compression as $COMPRESSION.${txtrst}";
+                fi;
                 EXT="sql.xz";
         else
                 COMPRESSION='gzip';
-                echo "${txtgrn}Setting compression $COMPRESSION (default).${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting compression $COMPRESSION (default).${txtrst}";
+                fi;
                 EXT="sql.gz"
         fi;
 
@@ -165,7 +180,9 @@ parse_result()
         ## Parse  decompression
         if [ "$DECOMPRESSION" = 'none' ]; then
                 DECOMPRESSION='cat';
-                echo "${txtgrn}Setting no decompression.${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting no decompression.${txtrst}";
+                fi;
         elif [ "$DECOMPRESSION" = 'pigz' ]; then
                 which $DECOMPRESSION &>/dev/null
                 if [ $? -ne 0 ]; then
@@ -174,7 +191,9 @@ parse_result()
                 else
                         DECOMPRESSION="pigz -d -c";
                 fi;
-                echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
+                fi;
        elif [ "$DECOMPRESSION" = 'bzip2' ]; then
                 which $DECOMPRESSION &>/dev/null
                 if [ $? -ne 0 ]; then
@@ -183,7 +202,9 @@ parse_result()
                 else
                         DECOMPRESSION="bzip2 -d -c";
                 fi;
-                echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
+                fi;
        elif [ "$DECOMPRESSION" = 'xz' ]; then
                 which $DECOMPRESSION &>/dev/null
                 if [ $? -ne 0 ]; then
@@ -192,7 +213,9 @@ parse_result()
                 else
                         DECOMPRESSION="xz -d -c";
                 fi;
-                echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
+                fi;
        elif [ "$DECOMPRESSION" = 'pxz' ]; then
                 which $DECOMPRESSION &>/dev/null
                 if [ $? -ne 0 ]; then
@@ -201,10 +224,14 @@ parse_result()
                 else
                         DECOMPRESSION="pxz -d -c";
                 fi;
-                echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting decompression as $DECOMPRESSION.${txtrst}";
+                fi;
         else
                 DECOMPRESSION="gzip -d -c";
-                echo "${txtgrn}Setting decompression $DECOMPRESSION (default).${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting decompression $DECOMPRESSION (default).${txtrst}";
+                fi;
         fi;
 
 
@@ -213,15 +240,21 @@ parse_result()
         echo $filecommand | grep "compressed"  1>/dev/null
         if [ `echo $?` -eq 0 ]
         then
-                echo "${txtylw}File $SOURCE is a compressed dump.${txtrst}"
+                if [ $SILENT = '0' ]; then
+                        echo "${txtylw}File $SOURCE is a compressed dump.${txtrst}"
+                fi;
                 if [ "$DECOMPRESSION" = 'cat' ]; then
-                        echo "${txtred} The input file $SOURCE appears to be a compressed dump. \n While the decompression is set to none.\n Please specify ${txtund}--decompression [gzip|bzip2|pigz|xz|pxz]${txtrst}${txtred} argument.${txtrst}";
+                        if [ $SILENT = '0' ]; then
+                            echo "${txtred} The input file $SOURCE appears to be a compressed dump. \n While the decompression is set to none.\n Please specify ${txtund}--decompression [gzip|bzip2|pigz|xz|pxz]${txtrst}${txtred} argument.${txtrst}";
+                        fi;
                         exit 1;
                 fi;
         else
                 echo "${txtylw}File $SOURCE is a regular dump.${txtrst}"
                 if [ "$DECOMPRESSION" != 'cat' ]; then
-                        echo "${txtred} Default decompression method for source is gzip. \n The input file $SOURCE does not appear a compressed dump. \n ${txtylw}We will try using no decompression. Please consider specifying ${txtund}--decompression none${txtrst}${txtylw} argument.${txtrst}";
+                        if [ $SILENT = '0' ]; then
+                            echo "${txtred} Default decompression method for source is gzip. \n The input file $SOURCE does not appear a compressed dump. \n ${txtylw}We will try using no decompression. Please consider specifying ${txtund}--decompression none${txtrst}${txtylw} argument.${txtrst}";
+                        fi;
                         DECOMPRESSION='cat'; ## Auto correct decompression to none for regular files.
                 fi;
         fi;
@@ -233,13 +266,17 @@ parse_result()
         fi;
         mkdir -p $OUTPUT_DIR
         if [ $? -eq 0 ]; then
-                echo "${txtgrn}Setting output directory: $OUTPUT_DIR.${txtrst}";
+                if [ $SILENT = '0' ]; then
+                    echo "${txtgrn}Setting output directory: $OUTPUT_DIR.${txtrst}";
+                fi;
         else
                 echo "${txtred}ERROR:Issue while checking output directory: $OUTPUT_DIR.${txtrst}";
                 exit 2;
         fi;
 
-echo "${txtylw}Processing: Extract $EXTRACT $MATCH_STR from $SOURCE with compression option as $COMPRESSION and output location as $OUTPUT_DIR${txtrst}";
+        if [ $SILENT = '0' ]; then
+                echo "${txtylw}Processing: Extract $EXTRACT $MATCH_STR from $SOURCE with compression option as $COMPRESSION and output location as $OUTPUT_DIR${txtrst}";
+        fi;
 
 }
 
@@ -252,7 +289,9 @@ include_dump_info()
         fi;
         OUTPUT_FILE=$1
 
-        echo "Including environment settings from mysqldump."
+        if [ $SILENT = '0' ]; then
+                echo "Including environment settings from mysqldump."
+        fi;
         $DECOMPRESSION $SOURCE | head -17 | $COMPRESSION > $OUTPUT_DIR/$OUTPUT_FILE.$EXT
         echo "" | $COMPRESSION >> $OUTPUT_DIR/$MATCH_STR.$EXT
         echo "/* -- Split with mysqldumpsplitter (http://goo.gl/WIWj6d) -- */" | $COMPRESSION >> $OUTPUT_DIR/$OUTPUT_FILE.$EXT
@@ -266,10 +305,13 @@ dump_splitter()
                 DB)
                         # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
                         include_dump_info $MATCH_STR
-
-                        echo "Extracting Database: $MATCH_STR";
+                        if [ $SILENT = '0' ]; then
+                                echo "Extracting Database: $MATCH_STR";
+                        fi;
                         $DECOMPRESSION $SOURCE | sed -n "/^-- Current Database: \`$MATCH_STR\`/,/^-- Current Database: /p" | $COMPRESSION >> $OUTPUT_DIR/$MATCH_STR.$EXT
-                        echo "${txtbld} Database $MATCH_STR  extracted from $SOURCE at $OUTPUT_DIR${txtrst}"
+                        if [ $SILENT = '0' ]; then
+                                echo "${txtbld} Database $MATCH_STR  extracted from $SOURCE at $OUTPUT_DIR${txtrst}"
+                        fi;
                         ;;
 
                 TABLE)
@@ -277,23 +319,32 @@ dump_splitter()
                         include_dump_info $MATCH_STR
 
                         #Loop for each tablename found in provided dumpfile
-                        echo "Extracting $MATCH_STR."
+                        if [ $SILENT = '0' ]; then
+                                echo "Extracting $MATCH_STR."
+                        fi;
                         #Extract table specific dump to tablename.sql
                         $DECOMPRESSION  $SOURCE | sed -n "/^-- Table structure for table \`$MATCH_STR\`/,/^-- Table structure for table/p" | $COMPRESSION >> $OUTPUT_DIR/$MATCH_STR.$EXT
-                        echo "${txtbld} Table $MATCH_STR  extracted from $SOURCE at $OUTPUT_DIR${txtrst}"
+                        if [ $SILENT = '0' ]; then
+                                echo "${txtbld} Table $MATCH_STR  extracted from $SOURCE at $OUTPUT_DIR${txtrst}"
+                        fi;
                         ;;
 
                 ALLDBS)
                         for dbname in $($DECOMPRESSION $SOURCE | grep -aE "^-- Current Database: " | awk -F"\`" {'print $2'})
                         do
-                         # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
-                         include_dump_info $dbname
+                                # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
+                                include_dump_info $dbname
 
-                                echo "Extracting Database $dbname..."
-                                #Extract database specific dump to database.sql.gz
+                                # @TODO Show current db name in silent mode.
+                                if [ $SILENT = '0' ]; then
+                                        echo "Extracting Database $dbname..."
+                                fi;
+                                # Extract database specific dump to database.sql.gz
                                 $DECOMPRESSION $SOURCE | sed -n "/^-- Current Database: \`$dbname\`/,/^-- Current Database: /p" | $COMPRESSION >> $OUTPUT_DIR/$dbname.$EXT
                                 DB_COUNT=$((DB_COUNT+1))
-                         echo "${txtbld}Database $dbname extracted from $SOURCE at $OUTPUT_DIR/$dbname.$EXT${txtrst}"
+                                if [ $SILENT = '0' ]; then
+                                        echo "${txtbld}Database $dbname extracted from $SOURCE at $OUTPUT_DIR/$dbname.$EXT${txtrst}"
+                                fi;
                         done;
                         echo "${txtbld}Total $DB_COUNT databases extracted.${txtrst}"
                         ;;
@@ -302,31 +353,40 @@ dump_splitter()
 
                         for tablename in $($DECOMPRESSION $SOURCE | grep -a "Table structure for table " | awk -F"\`" {'print $2'})
                         do
-                         # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
-                         include_dump_info $tablename
-
-                         #Extract table specific dump to tablename.sql
-                         $DECOMPRESSION $SOURCE | sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" | $COMPRESSION >> $OUTPUT_DIR/$tablename.$EXT
-                         TABLE_COUNT=$((TABLE_COUNT+1))
-                         echo "${txtbld}Table $tablename extracted from $DUMP_FILE at $OUTPUT_DIR/$tablename.$EXT${txtrst}"
-                        done;
-                         echo "${txtbld}Total $TABLE_COUNT tables extracted.${txtrst}"
+                            # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
+                            include_dump_info $tablename
+                            #Extract table specific dump to tablename.sql
+                            $DECOMPRESSION $SOURCE | sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" | $COMPRESSION >> $OUTPUT_DIR/$tablename.$EXT
+                            TABLE_COUNT=$((TABLE_COUNT+1))
+                            if [ $SILENT = '0' ]; then
+                                    echo "${txtbld}Table $tablename extracted from $DUMP_FILE at $OUTPUT_DIR/$tablename.$EXT${txtrst}"
+                            fi;
+                            done;
+                            if [ $SILENT = '0' ]; then
+                                    echo "${txtbld}Total $TABLE_COUNT tables extracted.${txtrst}"
+                            fi;
                         ;;
                 REGEXP)
 
                         TABLE_COUNT=0;
                         for tablename in $($DECOMPRESSION $SOURCE | grep -aE "Table structure for table \`$MATCH_STR" | awk -F"\`" {'print $2'})
                         do
-                         # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
-                         include_dump_info $tablename
+                                # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
+                                include_dump_info $tablename
 
-                         echo "Extracting $tablename..."
+                                if [ $SILENT = '0' ]; then
+                                        echo "Extracting $tablename..."
+                                fi;
                                 #Extract table specific dump to tablename.sql
                                 $DECOMPRESSION $SOURCE | sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" | $COMPRESSION >> $OUTPUT_DIR/$tablename.$EXT
-                         echo "${txtbld}Table $tablename extracted from $DUMP_FILE at $OUTPUT_DIR/$tablename.$EXT${txtrst}"
+                                if [ $SILENT = '0' ]; then
+                                        echo "${txtbld}Table $tablename extracted from $DUMP_FILE at $OUTPUT_DIR/$tablename.$EXT${txtrst}"
+                                fi;
                                 TABLE_COUNT=$((TABLE_COUNT+1))
                         done;
-                        echo "${txtbld}Total $TABLE_COUNT tables extracted.${txtrst}"
+                        if [ $SILENT = '0' ]; then
+                                echo "${txtbld}Total $TABLE_COUNT tables extracted.${txtrst}"
+                        fi;
                         ;;
 
                 DBTABLE)
@@ -334,7 +394,7 @@ dump_splitter()
                         MATCH_DB=`echo $MATCH_STR | awk -F "." {'print $1'}`
                         MATCH_TBLS=`echo $MATCH_STR | awk -F "." {'print $2'}`
                         if [ "$MATCH_TBLS" = "*" ]; then
-                         MATCH_TBLS='';
+                                MATCH_TBLS='';
                         fi;
                         TABLE_COUNT=0;
 
@@ -342,14 +402,18 @@ dump_splitter()
                         do
                                 echo "Extracting $tablename..."
                                 #Extract table specific dump to tablename.sql
-                         # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
-                         include_dump_info $tablename
+                                # Include first 17 lines of standard mysqldump to preserve time_zone and charset.
+                                include_dump_info $tablename
 
                                 $DECOMPRESSION $SOURCE | sed -n "/^-- Current Database: \`$MATCH_DB\`/,/^-- Current Database: /p" | sed -n "/^-- Table structure for table \`$tablename\`/,/^-- Table structure for table/p" | $COMPRESSION >> $OUTPUT_DIR/$tablename.$EXT
-                         echo "${txtbld}Table $tablename extracted from $DUMP_FILE at $OUTPUT_DIR/$tablename.$EXT${txtrst}"
+                                if [ $SILENT = '0' ]; then
+                                        echo "${txtbld}Table $tablename extracted from $DUMP_FILE at $OUTPUT_DIR/$tablename.$EXT${txtrst}"
+                                fi;
                                 TABLE_COUNT=$((TABLE_COUNT+1))
                         done;
-                        echo "${txtbld}Total $TABLE_COUNT tables extracted from $MATCH_DB.${txtrst}"
+                        if [ $SILENT = '0' ]; then
+                                echo "${txtbld}Total $TABLE_COUNT tables extracted from $MATCH_DB.${txtrst}"
+                        fi;
                         ;;
 
                 *)      echo "Wrong option, exiting.";
@@ -372,28 +436,29 @@ fi
 # Accepts Parameters
 while [ "$1" != "" ]; do
     case $1 in
-        --source|-S  )   shift
+        --silent )
+                SILENT='1' ;;
+        --source|-S )   shift
                 if [ -z $1 ]; then
                         missing_arg --source
                 fi;
                 SOURCE=$1 ;;
-
-        --extract|-E  )   shift
+        --extract|-E )   shift
                 if [ -z $1 ]; then
                         missing_arg --extract
                 fi;
                 EXTRACT=$1 ;;
-        --compression|-C  )   shift
+        --compression|-C )   shift
                 if [ -z $1 ]; then
                         missing_arg --compression
                 fi;
                 COMPRESSION=$1 ;;
-        --decompression|-D) shift
+        --decompression|-D ) shift
                 if [ -z $1 ]; then
                         missing_arg --decompression
                 fi;
                 DECOMPRESSION=$1 ;;
-        --output_dir|-O  ) shift
+        --output_dir|-O ) shift
                 if [ -z $1 ]; then
                         missing_arg --output_dir
                 fi;
@@ -403,18 +468,10 @@ while [ "$1" != "" ]; do
                         missing_arg --match_str
                 fi;
                 MATCH_STR=$1 ;;
-        --desc  )
-                        EXTRACT="DESCRIBE"
-                        parse_result
-                        echo "-------------------------------";
-                        echo "Database\t\tTables";
-                        echo "-------------------------------";
-                        $DECOMPRESSION $SOURCE | grep -aE "(^-- Current Database:|^-- Table structure for table)" | sed  's/-- Current Database: /-------------------------------\n/' | sed 's/-- Table structure for table /\t\t/'| sed 's/`//g' ;
-                        echo "-------------------------------";
-                        exit 0;
-                ;;
+        --desc )
+                EXTRACT="DESCRIBE" ;;
 
-        --config        ) shift;
+        --config ) shift;
                 if [ -z $1 ]; then
                         missing_arg --config
                 fi;
@@ -433,5 +490,23 @@ while [ "$1" != "" ]; do
 done
 
 parse_result
-dump_splitter
+if [ $EXTRACT = "DESCRIBE" ]; then
+    if [ $SILENT = '0' ]; then
+      echo "-------------------------------";
+      echo "Database\t\tTables";
+      echo "-------------------------------";
+      $DECOMPRESSION $SOURCE \
+        | grep -aE "(^-- Current Database:|^-- Table structure for table)" \
+        | sed  's/-- Current Database: /-------------------------------\n/' \
+        | sed 's/-- Table structure for table /\t\t/'| sed 's/`//g' ;
+      echo "-------------------------------";
+    else
+      $DECOMPRESSION $SOURCE \
+        | grep -aE "(^-- Current Database:|^-- Table structure for table)" \
+        | sed  's/-- Current Database: /-------------------------------\n/' \
+        | sed 's/-- Table structure for table //'| sed 's/`//g' ;
+    fi;
+else
+  dump_splitter
+fi;
 exit 0;
